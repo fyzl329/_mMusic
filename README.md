@@ -1,43 +1,46 @@
+
 # mMusic
-Lightweight Android music app with YouTube Music playback, local library, and offline caching.
+A friendly music app for Android. It plays your YouTube Music favorites, mixes in your local library, and lets you keep tracks handy offline. The experience is meant to feel light, fast, and personal.
 
-## Features
-- Play nearly any YouTube Music track or video; open `watch`, `playlist`, `channel` links directly.
-- Local library playback with background play and audio normalization.
-- Offline caching for tracks and playlists.
-- Search across songs, albums, artists, videos, and playlists; discover by mood/genre.
-- Lyrics: fetch, display, and edit synced lyrics.
-- Playlist import/export (YouTube) plus local/cloud playlist management.
-- Android Auto support and highly configurable theming (Material You).
+Heavily inspired by and based on the wonderful **Vitune** by Bart Ostooven. Huge thanks to Bart for paving the way.
 
-## Quick start
-Prereqs: JDK 23, Android SDK/Build Tools 36, NDK 28.2.13676358, CMake 3.22.1.
+## What it does
+- Play most YouTube Music songs, albums, and playlists (drop in a watch/playlist/channel link and go).
+- Keep a local library with background play and optional loudness normalization.
+- Save music for offline listening.
+- Search across songs, albums, artists, videos, and playlists; browse moods and genres.
+- View and edit synced lyrics.
+- Import/export playlists (YouTube), and manage local playlists.
+- Android Auto support and flexible theming (Material You).
 
-Commands:
-- `./gradlew :app:assembleDebug` — build debug APK (ABI splits).
-- `./gradlew :app:installDebug` — install on a device/emulator.
-- `./gradlew detekt lint` — static analysis.
-- `./gradlew :app:testDebugUnitTest` — JVM tests (when present).
-- `./gradlew :app:connectedDebugAndroidTest` — instrumentation tests.
+## Getting started
+You need JDK 23, Android SDK/Build Tools 36, NDK 28.2.13676358, and CMake 3.22.1.
 
-If native artifacts misbehave before release builds, run `./gradlew clean`.
+Handy commands:
+- `./gradlew :app:assembleDebug` – build a debug APK (ABI splits).
+- `./gradlew :app:installDebug` – install on a connected device/emulator.
+- `./gradlew detekt lint` – quick static checks.
+- `./gradlew :app:testDebugUnitTest` – JVM tests when available.
+- `./gradlew :app:connectedDebugAndroidTest` – instrumentation tests on a device.
 
-## Modules
-- `app/`: Android app (Compose UI, playback service, Room schemas, Play assets).
-- `core/`: Shared UI, theming bridge, and data models.
-- `compose/`: Reusable Compose utilities (persist, preferences, routing, reordering).
-- `providers/`: External services (Innertube, Piped, Kugou, LrcLib, GitHub, translate, SponsorBlock) built on Ktor; `common` holds shared contracts.
-- `ktor-client-brotli/`: Brotli-enabled Ktor client pieces.
-- `fastlane/`: Release metadata and screenshots.
+If native bits act up, run `./gradlew clean` before building a release.
 
-See `docs/ARCHITECTURE.md` for data flow, playback pipeline, and provider details.
+## Project layout (short version)
+- `app/` – Android app (Compose UI, playback service, Room schemas, Play assets).
+- `core/` – Shared UI, theming bridge, and data models.
+- `compose/` – Small Compose helpers (persist, preferences, routing, reordering).
+- `providers/` – Service integrations (Innertube, Piped, Kugou, LrcLib, GitHub, translate, SponsorBlock) on Ktor.
+- `fastlane/` – Release metadata and screenshots.
 
-## Development notes
+More detail lives in `docs/ARCHITECTURE.md`.
+
+## Developer notes
 - Run `./gradlew detekt` before pushing.
-- Keep Room schemas under `app/schemas` up to date after entity changes.
-- Avoid committing secrets; signing comes from `ANDROID_NIGHTLY_*` env vars. `local.properties` should only hold SDK paths.
+- Keep Room schemas under `app/schemas` in sync after entity changes.
+- Do not commit secrets; signing uses `ANDROID_NIGHTLY_*` env vars. `local.properties` should only hold SDK paths.
 
 ## Acknowledgments
+- Vitune by Bart Ostooven (foundation and inspiration).
 - [YouTube-Internal-Clients](https://github.com/zerodytrash/YouTube-Internal-Clients)
 - [ionicons](https://github.com/ionic-team/ionicons)
 - [Flaticon: Ilham Fitrotul Hayat](https://www.flaticon.com/authors/ilham-fitrotul-hayat) for the logo base icon.
