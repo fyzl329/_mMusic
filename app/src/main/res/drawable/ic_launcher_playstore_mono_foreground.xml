@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:drawable="@drawable/ic_launcher_playstore_mono"
+        android:insetLeft="8dp"
+        android:insetTop="8dp"
+        android:insetRight="8dp"
+        android:insetBottom="8dp" />
+</layer-list>
