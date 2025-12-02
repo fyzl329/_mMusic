@@ -21,6 +21,11 @@ android {
     val cmakeVersion = "3.22.1"
     ndkVersion = "28.2.13676358"
 
+    val releaseStoreFile = project.findProperty("RELEASE_STORE_FILE")?.toString()
+    val releaseStorePassword = project.findProperty("RELEASE_STORE_PASSWORD")?.toString()
+    val releaseKeyAlias = project.findProperty("RELEASE_KEY_ALIAS")?.toString()
+    val releaseKeyPassword = project.findProperty("RELEASE_KEY_PASSWORD")?.toString()
+
     defaultConfig {
         applicationId = appId
 
@@ -60,6 +65,16 @@ android {
             keyAlias = System.getenv("ANDROID_NIGHTLY_KEYSTORE_ALIAS")
             keyPassword = System.getenv("ANDROID_NIGHTLY_KEYSTORE_PASSWORD")
         }
+
+        create("release") {
+            storeFile = releaseStoreFile?.let(::file)
+                ?: error("RELEASE_STORE_FILE is missing; check gradle.properties")
+            storePassword = releaseStorePassword
+                ?: error("RELEASE_STORE_PASSWORD is missing; check gradle.properties")
+            keyAlias = releaseKeyAlias ?: error("RELEASE_KEY_ALIAS is missing; check gradle.properties")
+            keyPassword = releaseKeyPassword
+                ?: error("RELEASE_KEY_PASSWORD is missing; check gradle.properties")
+        }
     }
 
     buildTypes {
@@ -67,17 +82,6 @@ android {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-DEBUG"
             manifestPlaceholders["appName"] = "mMusic Debug"
-        }
-
-        release {
-            versionNameSuffix = "-RELEASE"
-            isMinifyEnabled = true
-            isShrinkResources = true
-            manifestPlaceholders["appName"] = "mMusic"
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
         }
 
         create("nightly") {
@@ -88,6 +92,19 @@ android {
             versionNameSuffix = "-NIGHTLY"
             manifestPlaceholders["appName"] = "mMusic Nightly"
             signingConfig = signingConfigs.findByName("ci")
+        }
+
+        release {
+            versionNameSuffix = "-RELEASE"
+            isMinifyEnabled = false
+            isShrinkResources = false
+            isDebuggable = false
+            manifestPlaceholders["appName"] = "mMusic"
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 

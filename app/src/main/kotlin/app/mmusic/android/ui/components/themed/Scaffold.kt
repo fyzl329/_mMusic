@@ -31,6 +31,12 @@ sealed interface TabVisualStyle {
     object Pill : TabVisualStyle
 }
 
+enum class NavigationPlacement {
+    Auto, // rail in landscape, bar in portrait
+    Rail, // always left rail
+    Bar // always bottom bar
+}
+
 @Composable
 fun Scaffold(
     key: String,
@@ -42,6 +48,7 @@ fun Scaffold(
     modifier: Modifier = Modifier,
     showNavigationBar: Boolean = true,
     tabVisualStyle: TabVisualStyle = TabVisualStyle.Default,
+    navigationPlacement: NavigationPlacement = NavigationPlacement.Auto,
     tabsEditingTitle: String = stringResource(R.string.tabs),
     animateContent: Boolean = true,
     content: @Composable AnimatedVisibilityScope.(Int) -> Unit
@@ -49,7 +56,13 @@ fun Scaffold(
     val (colorPalette) = LocalAppearance.current
     var hiddenTabs by UIStatePreferences.mutableTabStateOf(key)
 
-    if (isLandscape) {
+    val useRail = when (navigationPlacement) {
+        NavigationPlacement.Rail -> true
+        NavigationPlacement.Bar -> false
+        NavigationPlacement.Auto -> isLandscape
+    }
+
+    if (useRail) {
         if (showNavigationBar) {
             Row(
                 modifier = modifier

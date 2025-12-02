@@ -15,15 +15,17 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,7 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.layout.ContentScale
@@ -53,6 +56,7 @@ import app.mmusic.android.ui.components.LocalMenuState
 import app.mmusic.android.ui.components.themed.FloatingActionsContainerWithScrollToTop
 import app.mmusic.android.ui.components.themed.NonQueuedMediaItemMenu
 import app.mmusic.android.ui.components.themed.SecondaryTextButton
+import app.mmusic.android.ui.components.themed.PrimaryButton
 import app.mmusic.android.ui.screens.playlistRoute
 import app.mmusic.android.utils.asMediaItem
 import app.mmusic.android.utils.forcePlay
@@ -86,7 +90,15 @@ fun HomeLanding(
     val binder = LocalPlayerServiceBinder.current
     val menuState = LocalMenuState.current
     val (currentMediaId, playing) = playingSong(binder)
-    var hasCompletedFirstPlayback by remember { mutableStateOf(DataPreferences.hasCompletedFirstPlayback) }
+    val isFirstRun = remember { !DataPreferences.hasSeenHomeTutorial }
+    var showWelcome by remember { mutableStateOf(isFirstRun) }
+    var showTutorial by remember { mutableStateOf(isFirstRun) }
+
+    LaunchedEffect(showTutorial) {
+        if (showTutorial && !DataPreferences.hasSeenHomeTutorial) {
+            DataPreferences.hasSeenHomeTutorial = true
+        }
+    }
 
     val trendingSongs by remember {
         Database.trending(limit = 12)
@@ -163,57 +175,51 @@ fun HomeLanding(
                 .padding(insetsPadding)
                 .padding(horizontal = Dimensions.items.horizontalPadding)
         ) {
-            if (!hasCompletedFirstPlayback) {
-                LaunchedEffect(Unit) {
-                    hasCompletedFirstPlayback = true
-                    DataPreferences.hasCompletedFirstPlayback = true
-                }
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    BasicText(
-                        text = stringResource(R.string.home_first_play_message),
-                        style = typography.l.semiBold.copy(color = colorPalette.text)
-                    )
-                }
-            } else {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(colorPalette.background0)
-                        .padding(vertical = Dimensions.items.verticalPadding)
-                ) {
-                    BasicText(
-                        text = stringResource(R.string.home_title),
-                        style = typography.xxl.semiBold.copy(color = colorPalette.text)
-                    )
-
-                    SecondaryTextButton(
-                        text = stringResource(R.string.home_discover_music),
-                        onClick = onSearchClick
-                    )
+            LazyColumn(
+                state = lazyListState,
+                contentPadding = PaddingValues(bottom = bottomContentPadding),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                if (showWelcome) {
+                    item("hero") {
+                        HomeHero(
+                            onSearchClick = onSearchClick,
+                            showTutorial = showTutorial,
+                            onDismissTutorial = {
+                                showTutorial = false
+                                showWelcome = false
+                                DataPreferences.hasSeenHomeTutorial = true
+                            }
+                        )
+                    }
+                } else {
+                    item("header") {
+                        HomeHeader(
+                            onSearchClick = onSearchClick
+                        )
+                    }
                 }
 
-                LazyColumn(
-                    state = lazyListState,
-                    contentPadding = PaddingValues(bottom = bottomContentPadding),
-                    verticalArrangement = Arrangement.spacedBy(20.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    item("for_you") {
-                        SectionContainer {
-                            SectionTitle(
-                                text = stringResource(R.string.for_you),
-                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                item("for_you") {
+                    SectionContainer {
+                        val relatedSongs = relatedPage?.songs
+                        val contentSongs = relatedSongs?.takeIf { it.isNotEmpty() }
+                            ?: trendingSongs.toImmutableList()
+                        val hasSongs = contentSongs.isNotEmpty()
+
+                        SectionHeader(
+                            title = stringResource(R.string.for_you),
+                            description = stringResource(
+                                if (relatedSongs.isNullOrEmpty()) {
+                                    R.string.home_recommendation_basis_trending
+                                } else {
+                                    R.string.home_recommendation_basis_recent
+                                }
                             )
+                        )
 
-                            val relatedSongs = relatedPage?.songs
-                            val contentSongs = relatedSongs?.takeIf { it.isNotEmpty() }
-                                ?: trendingSongs.toImmutableList()
-
+                        if (hasSongs) {
                             LazyRow(
                                 horizontalArrangement = Arrangement.spacedBy(Dimensions.items.horizontalPadding),
                                 contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
@@ -264,77 +270,87 @@ fun HomeLanding(
                                     }
                                 }
                             }
+                        } else {
+                            BasicText(
+                                text = stringResource(R.string.home_empty_message),
+                                style = typography.s.secondary.copy(color = colorPalette.text)
+                            )
                         }
                     }
+                }
 
-                    item("history") {
-                        if (historySongs.isNotEmpty()) {
-                            SectionContainer {
-                                SectionHeader(
-                                    title = stringResource(R.string.recently_played),
-                                    actionText = stringResource(R.string.home_discover_music),
-                                    onActionClick = onSearchClick
-                                )
+                item("history") {
+                    if (historySongs.isNotEmpty()) {
+                        SectionContainer {
+                            SectionHeader(
+                                title = stringResource(R.string.recently_played),
+                                actionText = stringResource(R.string.home_discover_music),
+                                onActionClick = onSearchClick
+                            )
 
-                                LazyRow(
-                                    horizontalArrangement = Arrangement.spacedBy(Dimensions.items.horizontalPadding),
-                                    contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(220.dp)
-                                ) {
-                                    items(historySongs.take(12), key = { it.id }) { song ->
-                                        AlbumCard(
-                                            song = song,
-                                            modifier = Modifier.width(160.dp),
-                                            onClick = { playLocalSong(song) },
-                                            onLongClick = {
-                                                menuState.display {
-                                                    NonQueuedMediaItemMenu(
-                                                        onDismiss = menuState::hide,
-                                                        mediaItem = song.asMediaItem
-                                                    )
-                                                }
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(Dimensions.items.horizontalPadding),
+                                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(220.dp)
+                            ) {
+                                items(historySongs.take(12), key = { it.id }) { song ->
+                                    AlbumCard(
+                                        song = song,
+                                        modifier = Modifier.width(160.dp),
+                                        onClick = { playLocalSong(song) },
+                                        onLongClick = {
+                                            menuState.display {
+                                                NonQueuedMediaItemMenu(
+                                                    onDismiss = menuState::hide,
+                                                    mediaItem = song.asMediaItem
+                                                )
                                             }
-                                        )
-                                    }
+                                        }
+                                    )
                                 }
                             }
                         }
                     }
+                }
 
-                    item("popular_row") {
-                        val playlists = relatedPage?.playlists.orEmpty()
+                item("popular_row") {
+                    val playlists = relatedPage?.playlists.orEmpty()
+                    SectionContainer {
+                        SectionHeader(
+                            title = stringResource(R.string.home_popular_playlists),
+                            actionText = stringResource(R.string.view_all),
+                            onActionClick = onSearchClick
+                        )
+
                         if (playlists.isNotEmpty()) {
-                            SectionContainer {
-                                SectionHeader(
-                                    title = stringResource(R.string.home_popular_playlists),
-                                    actionText = stringResource(R.string.view_all),
-                                    onActionClick = onSearchClick
-                                )
-
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(Dimensions.items.horizontalPadding),
-            contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            items(playlists, key = { it.key }) { playlist ->
-                PlaylistCard(
-                    card = playlist,
-                    modifier = Modifier
-                        .width(200.dp)
-                        .clickable {
-                            playlistRoute.global(
-                                playlist.key,
-                                playlist.info?.endpoint?.params,
-                                null,
-                                false
-                            )
-                        }
-                )
-            }
-        }
+                            LazyRow(
+                                horizontalArrangement = Arrangement.spacedBy(Dimensions.items.horizontalPadding),
+                                contentPadding = PaddingValues(horizontal = 2.dp, vertical = 6.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                items(playlists, key = { it.key }) { playlist ->
+                                    PlaylistCard(
+                                        card = playlist,
+                                        modifier = Modifier
+                                            .width(200.dp)
+                                            .clickable {
+                                                playlistRoute.global(
+                                                    playlist.key,
+                                                    playlist.info?.endpoint?.params,
+                                                    null,
+                                                    false
+                                                )
+                                            }
+                                    )
+                                }
                             }
+                        } else {
+                            BasicText(
+                                text = stringResource(R.string.home_empty_message),
+                                style = typography.s.secondary.copy(color = colorPalette.text)
+                            )
                         }
                     }
                 }
@@ -346,15 +362,132 @@ fun HomeLanding(
 }
 
 @Composable
-private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    val (colorPalette, typography) = LocalAppearance.current
-    BasicText(
-        text = text,
-        style = typography.l.semiBold.copy(color = colorPalette.text),
+private fun HomeHero(
+    onSearchClick: () -> Unit,
+    showTutorial: Boolean,
+    onDismissTutorial: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val (colorPalette, typography, _, cornerShape) = LocalAppearance.current
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = 6.dp)
-    )
+            .shadow(10.dp, cornerShape)
+            .clip(cornerShape)
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        colorPalette.background1,
+                        colorPalette.background0
+                    )
+                )
+            )
+            .padding(horizontal = Dimensions.items.horizontalPadding, vertical = 18.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                BasicText(
+                    text = stringResource(R.string.home_intro_title),
+                    style = typography.xxl.semiBold.copy(color = colorPalette.text)
+                )
+                BasicText(
+                    text = stringResource(R.string.home_hero_subtitle),
+                    style = typography.m.secondary.copy(color = colorPalette.text)
+                )
+            }
+
+            PrimaryButton(
+                onClick = onSearchClick,
+                icon = R.drawable.search
+            )
+        }
+
+        if (showTutorial) {
+            TutorialTips(onDismiss = onDismissTutorial)
+        } else {
+            SecondaryTextButton(
+                text = stringResource(R.string.home_hero_action_primary),
+                onClick = onSearchClick,
+                modifier = Modifier.align(Alignment.End)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TutorialTips(
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val (colorPalette, typography) = LocalAppearance.current
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        BasicText(
+            text = stringResource(R.string.home_tutorial_title),
+            style = typography.l.semiBold.copy(color = colorPalette.text)
+        )
+
+        TipRow(text = stringResource(R.string.home_tutorial_step_search))
+        TipRow(text = stringResource(R.string.home_tutorial_step_long_press))
+        TipRow(text = stringResource(R.string.home_tutorial_step_quick_picks))
+
+        SecondaryTextButton(
+            text = stringResource(R.string.home_tutorial_action),
+            onClick = onDismiss,
+            modifier = Modifier.align(Alignment.End)
+        )
+    }
+}
+
+@Composable
+private fun HomeHeader(
+    onSearchClick: () -> Unit
+) {
+    val (colorPalette, typography) = LocalAppearance.current
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Dimensions.items.verticalPadding)
+    ) {
+        BasicText(
+            text = stringResource(R.string.home_title),
+            style = typography.xxl.semiBold.copy(color = colorPalette.text)
+        )
+
+        SecondaryTextButton(
+            text = stringResource(R.string.home_hero_action_primary),
+            onClick = onSearchClick
+        )
+    }
+}
+
+@Composable
+private fun TipRow(text: String) {
+    val (colorPalette, typography) = LocalAppearance.current
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(10.dp)
+                .clip(CircleShape)
+                .background(colorPalette.text)
+        )
+        BasicText(
+            text = text,
+            style = typography.s.secondary.copy(color = colorPalette.text)
+        )
+    }
 }
 
 @Composable
@@ -362,23 +495,36 @@ private fun SectionHeader(
     title: String,
     actionText: String? = null,
     onActionClick: (() -> Unit)? = null,
+    description: String? = null,
     modifier: Modifier = Modifier
 ) {
     val (colorPalette, typography) = LocalAppearance.current
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = modifier
             .fillMaxWidth()
             .padding(bottom = 10.dp)
     ) {
-        BasicText(
-            text = title,
-            style = typography.l.semiBold.copy(color = colorPalette.text)
-        )
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            BasicText(
+                text = title,
+                style = typography.l.semiBold.copy(color = colorPalette.text)
+            )
 
-        if (actionText != null && onActionClick != null) {
-            SecondaryTextButton(text = actionText, onClick = onActionClick)
+            if (actionText != null && onActionClick != null) {
+                SecondaryTextButton(text = actionText, onClick = onActionClick)
+            }
+        }
+
+        if (!description.isNullOrBlank()) {
+            BasicText(
+                text = description,
+                style = typography.s.secondary.copy(color = colorPalette.text)
+            )
         }
     }
 }
@@ -392,6 +538,7 @@ private fun SectionContainer(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .shadow(10.dp, cornerShape)
             .clip(cornerShape)
             .background(colorPalette.background1)
             .padding(horizontal = Dimensions.items.horizontalPadding, vertical = 14.dp),

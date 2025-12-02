@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import app.mmusic.android.R
+import app.mmusic.android.ui.components.themed.NavigationPlacement
 import app.mmusic.android.ui.components.themed.Scaffold
 import app.mmusic.android.ui.components.themed.TabVisualStyle
 import app.mmusic.android.ui.screens.GlobalRoutes
@@ -112,6 +113,7 @@ fun SearchContent(
         },
         tabVisualStyle = TabVisualStyle.Pill,
         showNavigationBar = true,
+        navigationPlacement = NavigationPlacement.Rail,
         animateContent = false // TODO: consider reintroducing a light transition once UX is stable
     ) { currentTabIndex ->
         saveableStateHolder.SaveableStateProvider(currentTabIndex) {

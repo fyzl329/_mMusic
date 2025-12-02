@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import app.mmusic.android.R
+import app.mmusic.android.ui.components.themed.NavigationPlacement
 import app.mmusic.android.ui.components.themed.Scaffold
 import app.mmusic.android.ui.screens.GlobalRoutes
 import app.mmusic.android.ui.screens.Route
@@ -38,7 +39,8 @@ fun PipedPlaylistScreen(
                 onTabChange = { },
                 tabColumnContent = {
                     tab(0, R.string.songs, R.drawable.musical_notes)
-                }
+                },
+                navigationPlacement = NavigationPlacement.Rail
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(key = currentTabIndex) {
                     when (currentTabIndex) {

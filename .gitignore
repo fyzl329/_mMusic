@@ -14,3 +14,9 @@ local.properties
 
 .quickjs_cache/
 jniLibs/
+
+# Keystore and secrets
+keystore/
+*.jks
+*.keystore
+gradle.properties

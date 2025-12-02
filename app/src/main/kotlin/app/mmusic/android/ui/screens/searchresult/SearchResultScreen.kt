@@ -16,6 +16,7 @@ import app.mmusic.android.preferences.UIStatePreferences
 import app.mmusic.android.ui.components.LocalMenuState
 import app.mmusic.android.ui.components.themed.Header
 import app.mmusic.android.ui.components.themed.NonQueuedMediaItemMenu
+import app.mmusic.android.ui.components.themed.NavigationPlacement
 import app.mmusic.android.ui.components.themed.Scaffold
 import app.mmusic.android.ui.items.AlbumItem
 import app.mmusic.android.ui.items.AlbumItemPlaceholder
@@ -82,7 +83,8 @@ fun SearchResultScreen(query: String, onSearchAgain: () -> Unit) {
                     tab(1, R.string.albums, R.drawable.disc)
                     tab(2, R.string.videos, R.drawable.film)
                     tab(3, R.string.playlists, R.drawable.playlist)
-                }
+                },
+                navigationPlacement = NavigationPlacement.Rail
             ) { tabIndex ->
                 val index = tabIndex.coerceIn(0, 3)
 

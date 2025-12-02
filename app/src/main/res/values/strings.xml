@@ -41,6 +41,13 @@
     <string name="home_popular_playlists">Popular playlists</string>
     <string name="home_recommendation_basis_trending">Tuned to the trending energy you asked for.</string>
     <string name="home_recommendation_basis_recent">Handpicked from your recent plays.</string>
+    <string name="home_tutorial_title">Quick start</string>
+    <string name="home_tutorial_action">Got it</string>
+    <string name="home_tutorial_step_search">Search any song or artist to start a mix.</string>
+    <string name="home_tutorial_step_long_press">Long-press a track to queue it, save it, or start radio.</string>
+    <string name="home_tutorial_step_quick_picks">Spin through Quick picks for a fresh set of songs.</string>
+    <string name="home_hero_subtitle">Jump back in or start something new.</string>
+    <string name="home_hero_action_primary">Start listening</string>
     <string name="start_listening">Start listening</string>
     <string name="home_title">Home</string>
     <string name="explore_title">Explore</string>

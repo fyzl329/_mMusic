@@ -10,6 +10,7 @@ import app.mmusic.android.Database
 import app.mmusic.android.R
 import app.mmusic.android.models.Playlist
 import app.mmusic.android.models.Song
+import app.mmusic.android.ui.components.themed.NavigationPlacement
 import app.mmusic.android.ui.components.themed.Scaffold
 import app.mmusic.android.ui.components.themed.adaptiveThumbnailContent
 import app.mmusic.android.ui.screens.GlobalRoutes
@@ -67,7 +68,8 @@ fun LocalPlaylistScreen(playlistId: Long) {
                 onTabChange = { },
                 tabColumnContent = {
                     tab(0, R.string.songs, R.drawable.musical_notes)
-                }
+                },
+                navigationPlacement = NavigationPlacement.Rail
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(currentTabIndex) {
                     playlist?.let {

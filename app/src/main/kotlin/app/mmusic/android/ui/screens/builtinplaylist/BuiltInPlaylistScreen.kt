@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import app.mmusic.android.R
 import app.mmusic.android.preferences.DataPreferences
 import app.mmusic.android.preferences.UIStatePreferences
+import app.mmusic.android.ui.components.themed.NavigationPlacement
 import app.mmusic.android.ui.components.themed.Scaffold
 import app.mmusic.android.ui.screens.GlobalRoutes
 import app.mmusic.android.ui.screens.Route
@@ -59,7 +60,8 @@ fun BuiltInPlaylistScreen(builtInPlaylist: BuiltInPlaylist) {
                     tab(2, topTabTitle, R.drawable.trending_up)
                     tab(3, R.string.history, R.drawable.history)
                 },
-                tabsEditingTitle = stringResource(R.string.playlists)
+                tabsEditingTitle = stringResource(R.string.playlists),
+                navigationPlacement = NavigationPlacement.Rail
             ) { currentTabIndex ->
                 saveableStateHolder.SaveableStateProvider(key = currentTabIndex) {
                     BuiltInPlaylist
