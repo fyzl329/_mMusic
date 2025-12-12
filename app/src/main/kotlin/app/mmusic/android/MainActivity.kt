@@ -195,16 +195,18 @@ class MainViewModel : androidx.lifecycle.ViewModel() {
 
 class MainActivity : ComponentActivity(), MonetColorsChangedListener {
     private val vm: MainViewModel by viewModels()
+    private var isServiceBound = false
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            isServiceBound = true
             if (service is PlayerService.Binder) vm.binder = service
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
             vm.binder = null
+            isServiceBound = false
             // Try to rebind, otherwise fail
-            unbindService(this)
             bindService(intent<PlayerService>(), this, Context.BIND_AUTO_CREATE)
         }
     }
@@ -475,7 +477,10 @@ class MainActivity : ComponentActivity(), MonetColorsChangedListener {
     }
 
     override fun onStop() {
-        unbindService(serviceConnection)
+        if (isServiceBound) {
+            unbindService(serviceConnection)
+            isServiceBound = false
+        }
         super.onStop()
     }
 

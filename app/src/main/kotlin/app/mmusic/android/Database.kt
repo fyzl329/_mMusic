@@ -82,6 +82,8 @@ object DatabaseDependency {
             klass = DatabaseInitializer::class.java,
             name = "data.db"
         )
+        // Allow destructive rebuild when a user downgrades from a newer schema to avoid startup crash
+        .fallbackToDestructiveMigrationOnDowngrade()
         .addMigrations(
             From8To9Migration(),
             From10To11Migration(),

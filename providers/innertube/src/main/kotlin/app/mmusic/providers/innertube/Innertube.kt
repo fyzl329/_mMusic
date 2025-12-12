@@ -57,6 +57,7 @@ object Innertube {
                 val ex = cause as? ResponseException ?: return@handleResponseExceptionWithRequest
                 val code = ex.response.status.value
                 if (code !in (100..<600)) throw InvalidHttpCodeException(code)
+                throw ex
             }
         }
 

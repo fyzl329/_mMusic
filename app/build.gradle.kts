@@ -25,6 +25,12 @@ android {
     val releaseStorePassword = project.findProperty("RELEASE_STORE_PASSWORD")?.toString()
     val releaseKeyAlias = project.findProperty("RELEASE_KEY_ALIAS")?.toString()
     val releaseKeyPassword = project.findProperty("RELEASE_KEY_PASSWORD")?.toString()
+    val releaseSigningProvided = listOf(
+        releaseStoreFile,
+        releaseStorePassword,
+        releaseKeyAlias,
+        releaseKeyPassword
+    ).all { !it.isNullOrBlank() }
 
     defaultConfig {
         applicationId = appId
@@ -59,6 +65,8 @@ android {
     }
 
     signingConfigs {
+        val debugSigning = getByName("debug")
+
         create("ci") {
             storeFile = System.getenv("ANDROID_NIGHTLY_KEYSTORE")?.let { file(it) }
             storePassword = System.getenv("ANDROID_NIGHTLY_KEYSTORE_PASSWORD")
@@ -67,13 +75,18 @@ android {
         }
 
         create("release") {
-            storeFile = releaseStoreFile?.let(::file)
-                ?: error("RELEASE_STORE_FILE is missing; check gradle.properties")
-            storePassword = releaseStorePassword
-                ?: error("RELEASE_STORE_PASSWORD is missing; check gradle.properties")
-            keyAlias = releaseKeyAlias ?: error("RELEASE_KEY_ALIAS is missing; check gradle.properties")
-            keyPassword = releaseKeyPassword
-                ?: error("RELEASE_KEY_PASSWORD is missing; check gradle.properties")
+            if (releaseSigningProvided) {
+                storeFile = releaseStoreFile?.let(::file)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            } else {
+                // Fallback to debug signing when release keystore properties are absent
+                storeFile = debugSigning.storeFile
+                storePassword = debugSigning.storePassword
+                keyAlias = debugSigning.keyAlias
+                keyPassword = debugSigning.keyPassword
+            }
         }
     }
 
